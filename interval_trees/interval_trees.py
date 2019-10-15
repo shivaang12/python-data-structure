@@ -39,17 +39,19 @@ class IntervalTree(object):
                 node = node.right_child
 
     def searchIntervalOverlap(self, query_node):
-        node = self.root
-        while(node):
-            if(self.isOverlapping(node.interval, query_node)):
-                print("Overlapping with ", node.interval)
-                return True
+        p_node = None
+        c_node = self.root
+        while(c_node):
+            if(self.isOverlapping(c_node.interval, query_node)):
+                print("Overlapping with ", c_node.interval)
+                return p_node, c_node, True
             else:
-                if(node.Max >= query_node[0]):
-                    node = node.left_child
+                p_node = c_node
+                if(c_node.Max >= query_node[0]):
+                    c_node = c_node.left_child
                 else:
-                    node = node.right_child
-        return False
+                    c_node = c_node.right_child
+        return None, None, False
 
     def isOverlapping(self, interval_left, interval_right):
         if((interval_left[0] <= interval_right[1]) and (interval_right[0] <= interval_left[1])):
@@ -104,7 +106,47 @@ class IntervalTree(object):
                 node_list.append(current_node.right_child)
         g.view()
         return
+    
+    def delete_node(self, node_):
+        parent_node, node_to_delete, _ = self.searchIntervalOverlap(node_)
 
+        # If no overlap
+        if not node_to_delete:
+            return false
+
+        if node_to_delete.hasChild():
+            if node_to_delete.left_child:
+                if self.whichChild(parent_node, node_to_delete) == "left":
+                    parent_node.left_child = node_to_delete.left_child
+                else:
+                    parent_node.right_child = node_to_delete.left_child
+                self.reloadTree(node_to_delete.right_child)
+            else:
+                if self.whichChild(parent_node, node_to_delete) == "left":
+                    parent_node.left_child = node_to_delete.right_child
+                else:
+                    parent_node.right_child = node_to_delete.right_child   
+        else:
+            if parent_node.left_child == node_to_delete:
+                parent_node.left_child = None
+            if parent_node.right_child == node_to_delete:
+                parent_node.right_child = None
+            return True
+    
+    def whichChild(self, p_node, c_node):
+        if p_node.left_child == c_node:
+            return "left"
+        if p_node.right_child == c_node:
+            return "right"
+    
+    def reloadTree(self, node_):
+        if node_.hasChild():
+            if node_.left_child:
+                reloadTree(node_.left_child)
+            if node_.right_child:
+                reloadTree(node_.left_child)
+        else:
+            self.addNode(node_)
 
 if __name__ == '__main__':
     It = IntervalTree(Node([15, 20]))
@@ -115,5 +157,6 @@ if __name__ == '__main__':
     It.addNode(Node([30, 40]))
     It.constructMax()
     It.printTree()
-    print(It.searchIntervalOverlap([6, 7]))
+    print(It.searchIntervalOverlap([6, 7])[2])
+    It.delete_node([9, 11])
     It.printTreeInPdf("interval_tree.gv")
